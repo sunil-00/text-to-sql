@@ -15,13 +15,13 @@ def add_to_chat_history(role: str, content: str) -> None:
 
 
 def get_llm_response(query: str) -> str:
+    add_to_chat_history('user', query)
     try:
         chat_completion = client.chat.completions.create(
             messages=chat_history,
             model=MODEL,
         )
         llm_response = chat_completion.choices[0].message.content
-        add_to_chat_history('user', query)
         add_to_chat_history('assistant', llm_response)
     except Exception:
         return "Oops! Something went wrong. Please try again."
