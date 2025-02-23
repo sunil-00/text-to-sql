@@ -2,8 +2,19 @@ from fastapi import FastAPI, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.llm import get_llm_response, chat_history
-
+from app.llm import (
+    chat_history,
+    generate_sql_from_llm,
+    add_to_chat_history
+)
+from app.utils import (
+    get_db_schema,
+    format_schema_for_llm,
+    create_llm_system_prompt,
+    execute_sql_query,
+    sanitize_sql_query,
+    is_valid_sql
+)
 
 app = FastAPI(title="Text-to-SQL App", description="Convert Natural Language to SQL")
 
@@ -17,10 +28,38 @@ def home():
     return {"message": "Welcome to Text-to-SQL API"}
 
 
+def send_llm_response(request: Request, content: dict):
+    add_to_chat_history('assistant', content)
+    return templates.TemplateResponse("llm_response.html", {"request": request, "llm_response": content})
+
+
+def handle_error(request: Request, message: str):
+    return send_llm_response(request, {'error': True, 'content': message})
+
+
 @app.post("/query")
 def query(request: Request, query: str = Form(...)):
-    llm_response = get_llm_response(query.strip())
-    return templates.TemplateResponse("llm_response.html", {"request": request, "llm_response": llm_response})
+    query = query.strip()
+    add_to_chat_history('user', query)
+    
+    try:
+        schema = get_db_schema()
+        formatted_schema = format_schema_for_llm(schema)
+        llm_system_prompt = create_llm_system_prompt(formatted_schema)
+        llm_response = generate_sql_from_llm(query, llm_system_prompt)
+    except Exception:
+        return handle_error(request, "Oops! Something went wrong. Please try again.")
+
+    llm_response = sanitize_sql_query(llm_response)
+
+    if not is_valid_sql(llm_response):
+        return handle_error(request, "The LLM response is not a valid SQL query.")
+
+    try:
+        results = execute_sql_query(llm_response)
+        return send_llm_response(request, results)
+    except Exception as e:
+        return handle_error(request, f"Error executing SQL query: {e}")
 
 
 @app.get("/chat")

@@ -27,3 +27,19 @@ def get_llm_response(query: str) -> str:
         return "Oops! Something went wrong. Please try again."
 
     return llm_response
+
+
+def generate_sql_from_llm(query: str, system_prompt: str) -> str:
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': query},
+            ],
+            model=MODEL,
+        )
+        llm_response = chat_completion.choices[0].message.content.strip()
+    except Exception:
+        raise
+
+    return llm_response

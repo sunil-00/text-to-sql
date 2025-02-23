@@ -1,8 +1,50 @@
 {% for message in chat_history %}
-<div class="message {{ message.role }}-message">
-  {#- -#}
-  <div>{{ message.content | safe }}</div>
-  {#- -#}
+{% set msg_cls = '' if not message.content is mapping else 'error-message' if message.content.error else 'empty-message' if message.content.empty else 'normal-message' %}
+<div class="message {{ message.role }}-message {{ msg_cls }}">
+  {%- if message.content is mapping -%}
+    {%- if message.role == 'assistant' -%}
+      <div class="sql-query-container">
+        <p class="sql-query-title">SQL Query:</p><pre class="sql-query"><code>{{ message.content.query | default('No SQL query generated') | safe }}</code></pre>
+      </div>
+    {%- endif -%}
+    {%- if message.content.error -%}
+      <div>{{ message.content.content | default('Oops! Something went wrong. Please try again.') | safe }}</div>
+    {%- elif message.content.rows is defined and message.content.columns is defined -%}
+      {%- if message.content.empty -%}
+        <div>No data returned for the query</div>
+      {%- else -%}
+        {#- -#}
+        <p class="sql-query-title">Query Results:</p>
+        {#- -#}
+        <div class="table-wrapper">
+          {#- -#}
+          <table>
+            <thead>
+              <tr>
+                {%- for column in message.content.columns -%}
+                  <th>{{ column | safe }}</th>
+                {%- endfor -%}
+              </tr>
+            </thead>
+            <tbody>
+              {%- for row in message.content.rows -%}
+                <tr>
+                  {%- for cell in row -%}
+                    <td>{{ cell | safe }}</td>
+                  {%- endfor -%}
+                </tr>
+              {%- endfor -%}
+            </tbody>
+          </table>
+          {#- -#}
+        </div>
+      {%- endif -%}
+    {%- elif message.content.content -%}
+      <div>{{ message.content.content | safe }}</div>
+    {%- endif -%}
+  {%- else -%}
+    <div>{{ message.content | safe }}</div>
+  {%- endif -%}
 </div>
 {% endfor %}
 <div id="messages" hx-on::before-swap="event.target.querySelector('#loading-message').remove();">

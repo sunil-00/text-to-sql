@@ -1,7 +1,47 @@
-<div class="message assistant-message">
-  {#- -#}
-  <div>{{ llm_response | safe }}</div>
-  {#- -#}
+{% set msg_cls = '' if not llm_response is mapping else 'error-message' if llm_response.error else 'empty-message' if llm_response.empty else 'normal-message' %}
+<div class="message assistant-message {{ msg_cls }}">
+  {%- if llm_response is mapping -%}
+    <div class="sql-query-container">
+      <p class="sql-query-title">SQL Query:</p><pre class="sql-query"><code>{{ llm_response.query | default('No SQL query generated') | safe }}</code></pre>
+    </div>
+    {%- if llm_response.error -%}
+      <div>{{ llm_response.content | default('Oops! Something went wrong. Please try again.') | safe }}</div>
+    {%- elif llm_response.rows is defined and llm_response.columns is defined -%}
+      {%- if llm_response.empty -%}
+        <div>No data returned for the query</div>
+      {%- else -%}
+        {#- -#}
+        <p class="sql-query-title">Query Results:</p>
+        {#- -#}
+        <div class="table-wrapper">
+          {#- -#}
+          <table>
+            <thead>
+              <tr>
+                {%- for column in llm_response.columns -%}
+                  <th>{{ column | safe }}</th>
+                {%- endfor -%}
+              </tr>
+            </thead>
+            <tbody>
+              {%- for row in llm_response.rows -%}
+                <tr>
+                  {%- for cell in row -%}
+                    <td>{{ cell | safe }}</td>
+                  {%- endfor -%}
+                </tr>
+              {%- endfor -%}
+            </tbody>
+          </table>
+          {#- -#}
+        </div>
+      {%- endif -%}
+    {%- elif llm_response.content -%}
+      <div>{{ llm_response.content | safe }}</div>
+    {%- endif -%}
+  {%- else -%}
+    <div>{{ llm_response | safe }}</div>
+  {%- endif -%}
 </div>
 <div id="messages" hx-on::before-swap="event.target.querySelector('#loading-message').remove();">
   <div id="loading-message" class="htmx-indicator message loading-message">
