@@ -1,0 +1,14 @@
+{% for message in chat_history %}
+<div class="message {{ message.role }}-message">
+  {#- -#}
+  <div>{{ message.content | safe }}</div>
+  {#- -#}
+</div>
+{% endfor %}
+<div id="messages" hx-on::before-swap="event.target.querySelector('#loading-message').remove();">
+  <div id="loading-message" class="htmx-indicator message loading-message">
+    {#- -#}
+    <div class="shining-text">Assistant is typing...</div>
+    {#- -#}
+  </div>
+</div>

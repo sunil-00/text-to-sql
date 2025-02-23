@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with Assistant</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+  <div class="title-container">
+    <h1>Text-to-SQL</h1>
+  </div>
+
+  <div class="chat-container" id="chat-container">
+    {% include 'messages.html' %}
+  </div>
+
+  <div class="input-container">
+    <textarea 
+      id="user-input" 
+      name="query" 
+      placeholder="Ask me anything..." 
+      autocomplete="off"
+    ></textarea>
+    <button 
+      id="send-btn" 
+      onclick="sendMessage()" 
+      hx-indicator="#loading-message" 
+      hx-post="/query" 
+      hx-target="#messages"
+      hx-swap="outerHTML" 
+      hx-include="#user-input"
+      hx-on::before-request="(inputField.value.trim() === '') && event.preventDefault();"
+      hx-on::before-send="chatContainer.scrollTop = chatContainer.scrollHeight - 50;inputField.value = '';"
+      hx-on::after-request="chatContainer.scrollTop = chatContainer.scrollHeight;"
+      hx-disabled-elt="this"
+    >
+      Send
+    </button>
+    <button 
+      class="clear" 
+      hx-get="/clear-chat-modal" 
+      hx-target="#modal-container" 
+      hx-trigger="click" 
+      hx-swap="innerHTML"
+    >
+      Clear
+    </button>
+  </div>
+
+  <div id="modal-container"></div>
+
+  <script>
+    const inputField = document.getElementById('user-input');
+    const chatContainer = document.getElementById('chat-container');
+    const sendBtn = document.getElementById('send-btn');
+
+    setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 1000)
+
+    function sendMessage() {
+      const userMessage = inputField.value.trim();
+      if (userMessage !== "") {
+        const userMessageElement = document.createElement('div');
+        userMessageElement.classList.add('message', 'user-message');
+        userMessageElement.innerHTML = `<div>${userMessage}</div>`;
+        chatContainer.insertBefore(userMessageElement, document.getElementById("messages"));
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    inputField.addEventListener('keydown', function (event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        document.getElementById("send-btn").click();
+      }
+    });
+  </script>
+</body>
+
+</html>

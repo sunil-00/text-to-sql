@@ -1,0 +1,12 @@
+<div class="message assistant-message">
+  {#- -#}
+  <div>{{ llm_response | safe }}</div>
+  {#- -#}
+</div>
+<div id="messages" hx-on::before-swap="event.target.querySelector('#loading-message').remove();">
+  <div id="loading-message" class="htmx-indicator message loading-message">
+    {#- -#}
+    <div class="shining-text">Assistant is typing...</div>
+    {#- -#}
+  </div>
+</div>

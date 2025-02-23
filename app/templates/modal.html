@@ -1,0 +1,24 @@
+<div id="modal" class="modal show">
+  <div class="modal-content">
+    <div class="modal-title">
+      Are you sure you want to clear the chat?
+    </div>
+    <div class="modal-footer">
+      <button 
+        class="btn cancel" 
+        hx-on:click="document.getElementById('modal').remove()"
+      >
+        Cancel
+      </button>
+      <button 
+        class="btn" 
+        hx-delete="/chat" 
+        hx-target="#chat-container" 
+        hx-swap="innerHTML"
+        hx-on::after-request="document.getElementById('modal').remove()"
+      >
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>

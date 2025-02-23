@@ -21,7 +21,7 @@ def get_llm_response(query: str) -> str:
             messages=chat_history,
             model=MODEL,
         )
-        llm_response = chat_completion.choices[0].message.content
+        llm_response = chat_completion.choices[0].message.content.strip()
         add_to_chat_history('assistant', llm_response)
     except Exception:
         return "Oops! Something went wrong. Please try again."
